@@ -1,13 +1,12 @@
 package test.s160419098.anmp.todo.view
 
 import android.view.LayoutInflater
-import android.view.View
+import android.view.View.OnClickListener
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.CheckBox
+import android.widget.CompoundButton.OnCheckedChangeListener
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import test.s160419098.anmp.todo.R
+import test.s160419098.anmp.todo.databinding.ItemTodoBinding
 import test.s160419098.anmp.todo.model.Todo
 
 class TodoAdapter(
@@ -17,12 +16,11 @@ class TodoAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.item_todo, parent, false),
-            onItemCheck = { position -> onItemCheck(todos[position]) },
-            onEditButtonClick = { position ->
-                parent.findNavController().navigate(
-                    TodoListFragmentDirections.editTodo(todos[position].id)
-                )
+            ItemTodoBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+            getTodo = { position -> todos[position] },
+            onChecked = onItemCheck,
+            onEditClicked = {
+                parent.findNavController().navigate(TodoListFragmentDirections.editTodo(it.id))
             }
         )
     }
@@ -30,7 +28,7 @@ class TodoAdapter(
     override fun getItemCount() = todos.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.checkboxItem.text = todos[position].title
+        holder.binding.todo = todos[position]
     }
 
     fun setData(data: List<Todo>) {
@@ -46,21 +44,18 @@ class TodoAdapter(
     }
 
     class ViewHolder(
-        view: View,
-        onItemCheck: (position: Int) -> Unit,
-        onEditButtonClick: (position: Int) -> Unit,
-    ) : RecyclerView.ViewHolder(view) {
-        val checkboxItem: CheckBox
-
+        val binding: ItemTodoBinding,
+        getTodo: (position: Int) -> Todo,
+        onChecked: (todo: Todo) -> Unit,
+        onEditClicked: (todo: Todo) -> Unit,
+    ) : RecyclerView.ViewHolder(binding.root) {
         init {
-            checkboxItem = view.findViewById(R.id.checkbox_todo_item)
-
-            checkboxItem.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) onItemCheck(adapterPosition)
+            binding.onCheckListener = OnCheckedChangeListener { _, isChecked ->
+                if (isChecked) onChecked(getTodo(adapterPosition))
             }
 
-            view.findViewById<Button>(R.id.button_edit_todo_item).setOnClickListener {
-                onEditButtonClick(adapterPosition)
+            binding.onEditClickListener = OnClickListener {
+                onEditClicked(getTodo(adapterPosition))
             }
         }
     }
